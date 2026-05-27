@@ -7,9 +7,17 @@ import Message from "./Message";
 interface MessageListProps {
   messages: ChatMessage[];
   streamingId?: string;
+  onPromptSelect?: (prompt: string) => void;
 }
 
-export default function MessageList({ messages, streamingId }: MessageListProps) {
+const STARTER_PROMPTS = [
+  "What to wear to a rooftop party in Ibiza?",
+  "Build me a Parisian capsule wardrobe",
+  "Style me for a creative director interview",
+  "Evening look for the opera, dramatic but chic",
+];
+
+export default function MessageList({ messages, streamingId, onPromptSelect }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,21 +26,26 @@ export default function MessageList({ messages, streamingId }: MessageListProps)
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 px-8 text-center">
+      <div className="flex flex-col items-center justify-center h-full gap-6 px-8 text-center">
         <div className="w-10 h-10 border border-gold flex items-center justify-center">
           <span className="text-gold font-serif text-lg">S</span>
         </div>
         <div>
           <p className="font-serif text-xl text-charcoal mb-2">Your personal stylist awaits</p>
           <p className="text-sm text-muted font-sans max-w-xs leading-relaxed">
-            Ask me anything — from &quot;What to wear to a gallery opening?&quot; to &quot;Build my summer capsule wardrobe.&quot; Upload a photo for personalised analysis.
+            Ask me anything, from gallery openings to capsule wardrobes. Upload a photo for personalised analysis.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-sm mt-2">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-sm">
           {STARTER_PROMPTS.map((p) => (
-            <div key={p} className="border border-border bg-white px-3 py-2.5 text-xs font-sans text-muted text-left">
+            <button
+              key={p}
+              onClick={() => onPromptSelect?.(p)}
+              className="border border-border bg-white px-3 py-3 text-xs font-sans text-muted text-left hover:border-gold/50 hover:text-charcoal hover:bg-gold/5 transition-all duration-150 cursor-pointer"
+            >
               {p}
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -52,10 +65,3 @@ export default function MessageList({ messages, streamingId }: MessageListProps)
     </div>
   );
 }
-
-const STARTER_PROMPTS = [
-  '"What to wear to a rooftop party in Ibiza?"',
-  '"Build me a Parisian capsule wardrobe"',
-  '"Style me for a creative director interview"',
-  '"Evening look for the opera — dramatic but chic"',
-];

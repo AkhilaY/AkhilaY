@@ -1,7 +1,6 @@
 import HeroSection from "@/components/landing/HeroSection";
 import MarqueeBand from "@/components/landing/MarqueeBand";
 import FeatureRow from "@/components/landing/FeatureRow";
-import TestimonialsRow from "@/components/landing/TestimonialsRow";
 import CtaBanner from "@/components/landing/CtaBanner";
 
 export default function HomePage() {
@@ -10,7 +9,6 @@ export default function HomePage() {
       <HeroSection />
       <MarqueeBand />
       <FeatureRow />
-      <TestimonialsRow />
       <CtaBanner />
 
       <footer className="border-t border-border px-8 md:px-16 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">

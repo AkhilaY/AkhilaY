@@ -33,6 +33,7 @@ body {
   }
 }
 
+/* Marquee */
 @keyframes marquee {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
@@ -43,8 +44,42 @@ body {
   will-change: transform;
 }
 
+/* Line draw-in accent */
+@keyframes drawLine {
+  from { width: 0; opacity: 0; }
+  to   { width: 100%; opacity: 1; }
+}
+
+.animate-draw-line {
+  animation: drawLine 1.4s ease-out forwards;
+}
+
+/* Fade up reveal */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.8s ease-out forwards;
+}
+
+.animate-fade-up-delay-1 { animation: fadeUp 0.8s 0.15s ease-out both; }
+.animate-fade-up-delay-2 { animation: fadeUp 0.8s 0.3s  ease-out both; }
+.animate-fade-up-delay-3 { animation: fadeUp 0.8s 0.45s ease-out both; }
+.animate-fade-up-delay-4 { animation: fadeUp 0.8s 0.6s  ease-out both; }
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .animate-draw-line,
+  .animate-fade-up,
+  .animate-fade-up-delay-1,
+  .animate-fade-up-delay-2,
+  .animate-fade-up-delay-3,
+  .animate-fade-up-delay-4 {
     animation: none;
+    opacity: 1;
+    transform: none;
+    width: auto;
   }
 }
