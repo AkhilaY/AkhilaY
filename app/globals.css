@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #FAF9F6;
+  --white: #FFFFFF;
+  --charcoal: #1A1A1A;
+  --muted: #6B6B6B;
+  --gold: #C9A96E;
+  --border: #E8E4DF;
+}
+
+body {
+  color: var(--charcoal);
+  background: var(--cream);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
