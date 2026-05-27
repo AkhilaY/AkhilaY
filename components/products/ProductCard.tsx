@@ -11,14 +11,19 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, searchTerm }: ProductCardProps) {
   const [imgError, setImgError] = useState(false);
-  const href = product.link || (searchTerm ? googleShoppingFallback(searchTerm) : "#");
+
+  // Use direct merchant link if available; otherwise build a specific fallback
+  // using the product title so the user lands on relevant results
+  const href =
+    product.link ||
+    googleShoppingFallback(searchTerm ?? "", product.title || searchTerm);
 
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col bg-white border border-border hover:border-gold/60 transition-all duration-200 hover:shadow-sm"
+      className="group flex flex-col bg-white border border-border hover:border-gold/60 transition-all duration-200 cursor-pointer"
     >
       <div className="relative aspect-square overflow-hidden bg-[#F5F3F0]">
         {!imgError && product.thumbnail ? (
@@ -52,7 +57,7 @@ export default function ProductCard({ product, searchTerm }: ProductCardProps) {
           )}
         </div>
         <span className="text-[10px] tracking-widest uppercase text-gold font-sans mt-1 group-hover:text-charcoal transition-colors">
-          View Item →
+          View Item
         </span>
       </div>
     </a>

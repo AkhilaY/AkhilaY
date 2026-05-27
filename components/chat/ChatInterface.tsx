@@ -1,24 +1,38 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ChatMessage, ImageAnalysis, StyleProfile } from "@/lib/types";
 import { extractSearchTerms, generateId, resizeImageFile } from "@/lib/utils";
-import { loadStyleProfile } from "@/lib/quiz";
+import {
+  loadStyleProfile,
+  loadPhotoAnalysis,
+  hasCompletedOnboarding,
+} from "@/lib/quiz";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import StyleQuizPanel from "./StyleQuizPanel";
 
 export default function ChatInterface() {
+  const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streamingId, setStreamingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
   const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null);
   const [currentAnalysis, setCurrentAnalysis] = useState<ImageAnalysis | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (!hasCompletedOnboarding()) {
+      router.replace("/onboarding/quiz");
+      return;
+    }
     setStyleProfile(loadStyleProfile());
-  }, []);
+    const saved = loadPhotoAnalysis();
+    if (saved) setCurrentAnalysis(saved);
+    setReady(true);
+  }, [router]);
 
   const fetchProducts = useCallback(async (terms: string[], msgId: string) => {
     if (terms.length === 0) return;
@@ -35,7 +49,7 @@ export default function ChatInterface() {
         );
       }
     } catch {
-      // silently fall back to Google Shopping links (ProductGrid handles empty arrays)
+      // silently fall back — ProductGrid handles empty arrays
     }
   }, []);
 
@@ -45,18 +59,15 @@ export default function ChatInterface() {
     let imageAnalysis: ImageAnalysis | null = null;
     let imagePreview: string | undefined;
 
-    // Analyze image if attached
     if (file) {
       imagePreview = URL.createObjectURL(file);
       setIsLoading(true);
       try {
         const base64 = await resizeImageFile(file);
-        const form = new FormData();
-        // Re-convert base64 to blob for the form
         const arr = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
         const blob = new Blob([arr], { type: file.type });
+        const form = new FormData();
         form.append("image", blob, file.name);
-
         const res = await fetch("/api/analyze", { method: "POST", body: form });
         const json = await res.json();
         if (json.success) {
@@ -76,21 +87,13 @@ export default function ChatInterface() {
     };
 
     const assistantId = generateId();
-    const assistantMsg: ChatMessage = {
-      id: assistantId,
-      role: "assistant",
-      content: "",
-    };
+    const assistantMsg: ChatMessage = { id: assistantId, role: "assistant", content: "" };
 
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
     setStreamingId(assistantId);
     setIsLoading(true);
 
-    // Build conversation history for API (text only)
-    const history = [...messages, userMsg].map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
 
     try {
       const res = await fetch("/api/chat", {
@@ -114,13 +117,10 @@ export default function ChatInterface() {
         if (done) break;
         fullText += decoder.decode(value, { stream: true });
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, content: fullText } : m
-          )
+          prev.map((m) => (m.id === assistantId ? { ...m, content: fullText } : m))
         );
       }
 
-      // Extract search terms, clean displayed text
       const { clean, terms } = extractSearchTerms(fullText);
       setMessages((prev) =>
         prev.map((m) =>
@@ -130,7 +130,6 @@ export default function ChatInterface() {
         )
       );
 
-      // Fetch real products in background
       fetchProducts(terms, assistantId);
     } catch {
       setMessages((prev) =>
@@ -146,9 +145,21 @@ export default function ChatInterface() {
     }
   }, [isLoading, messages, styleProfile, currentAnalysis, fetchProducts]);
 
+  function handlePromptSelect(prompt: string) {
+    sendMessage(prompt);
+  }
+
   function handleQuizComplete(profile: StyleProfile) {
     setStyleProfile(profile);
     setQuizOpen(false);
+  }
+
+  if (!ready) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="w-6 h-6 border border-gold/40 border-t-gold animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -159,13 +170,13 @@ export default function ChatInterface() {
         <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-white flex-shrink-0">
           <div>
             <a href="/" className="text-[10px] tracking-widest uppercase text-muted font-sans hover:text-charcoal transition-colors">
-              ← Home
+              &larr; Home
             </a>
             <p className="font-serif text-lg text-charcoal mt-0.5">Your Stylist</p>
           </div>
           <button
             onClick={() => setQuizOpen((o) => !o)}
-            className={`flex items-center gap-2 px-4 py-2 border text-xs tracking-widest uppercase font-sans transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 border text-xs tracking-widest uppercase font-sans transition-all cursor-pointer ${
               styleProfile
                 ? "border-gold text-gold bg-gold/5 hover:bg-gold/10"
                 : "border-border text-muted hover:border-gold hover:text-gold"
@@ -175,13 +186,17 @@ export default function ChatInterface() {
               <circle cx="7" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.2"/>
               <path d="M2 12C2 9.79086 4.23858 8 7 8C9.76142 8 12 9.79086 12 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
-            {styleProfile ? "Style Profile ✓" : "Style Profile"}
+            {styleProfile ? "Style Profile" : "Style Profile"}
           </button>
         </header>
 
         {/* Messages */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          <MessageList messages={messages} streamingId={streamingId ?? undefined} />
+          <MessageList
+            messages={messages}
+            streamingId={streamingId ?? undefined}
+            onPromptSelect={handlePromptSelect}
+          />
         </div>
 
         {/* Input */}

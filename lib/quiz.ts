@@ -1,4 +1,4 @@
-import { StyleProfile } from "./types";
+import { StyleProfile, ImageAnalysis } from "./types";
 
 export interface QuizQuestion {
   id: keyof StyleProfile;
@@ -82,6 +82,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
 ];
 
 const STORAGE_KEY = "styleProfile";
+const ONBOARDING_KEY = "onboardingComplete";
+const PHOTO_ANALYSIS_KEY = "photoAnalysis";
 
 export function saveStyleProfile(profile: StyleProfile): void {
   if (typeof window !== "undefined") {
@@ -95,6 +97,34 @@ export function loadStyleProfile(): StyleProfile | null {
   if (!raw) return null;
   try {
     return JSON.parse(raw) as StyleProfile;
+  } catch {
+    return null;
+  }
+}
+
+export function hasCompletedOnboarding(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(ONBOARDING_KEY) === "true";
+}
+
+export function markOnboardingComplete(): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(ONBOARDING_KEY, "true");
+  }
+}
+
+export function savePhotoAnalysis(analysis: ImageAnalysis): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(PHOTO_ANALYSIS_KEY, JSON.stringify(analysis));
+  }
+}
+
+export function loadPhotoAnalysis(): ImageAnalysis | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(PHOTO_ANALYSIS_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as ImageAnalysis;
   } catch {
     return null;
   }
